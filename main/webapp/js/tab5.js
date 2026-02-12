@@ -7,32 +7,54 @@ var Tab5 = (function() {
             items: [{
                 xtype: 'grid',
                 store: PrefixStoreModule.getStore(),
+                cls: 'grid-enhanced',
+                columnLines: true,
+                viewConfig: {
+                    stripeRows: true,
+                    emptyText: 'No records found. Upload an Excel file to add data.',
+                    deferEmptyText: false,
+                    trackOver: true
+                },
                 columns: [
-                    { text: 'ID', dataIndex: 'id', width: 60 },
-                    { text: 'Prefix Name', dataIndex: 'prefixName', flex: 1 },
-                    { text: 'Gender', dataIndex: 'gender', flex: 1 },
-                    { text: 'Prefix Of', dataIndex: 'prefixOf', flex: 1.5 }
+                    { text: 'ID', dataIndex: 'id', width: 60, align: 'center', sortable: true },
+                    { text: 'Prefix Name', dataIndex: 'prefixName', flex: 1, minWidth: 140, sortable: true },
+                    { text: 'Gender', dataIndex: 'gender', flex: 1, minWidth: 100, sortable: true },
+                    { text: 'Prefix Of', dataIndex: 'prefixOf', flex: 1.5, minWidth: 160, sortable: true }
                 ],
                 tbar: [
                     {
-                        text: 'Download Data',
+                        text: ' Download Data',
                         iconCls: 'x-fa fa-download',
+                        tooltip: 'Download all current data as Excel file',
+                        cls: 'btn-primary',
+                        scale: 'medium',
                         handler: function() {
                             window.location = '/seventab/api/excel/download';
                         }
                     },
                     {
-                        text: 'Download Template',
+                        text: ' Download Template',
                         iconCls: 'x-fa fa-file-excel-o',
+                        tooltip: 'Download blank Excel template for uploading',
+                        cls: 'btn-primary',
+                        scale: 'medium',
                         handler: function() {
                             window.location = '/seventab/api/excel/template';
                         }
                     },
-                    '-',
+                    {
+                        xtype: 'tbseparator'
+                    },
                     {
                         xtype: 'filefield',
                         name: 'excelFile',
-                        buttonText: 'Upload Excel',
+                        buttonText: ' Upload Excel',
+                        buttonConfig: {
+                            iconCls: 'x-fa fa-upload',
+                            cls: 'btn-success',
+                            scale: 'medium'
+                        },
+                        tooltip: 'Upload a completed Excel template (.xlsx)',
                         buttonOnly: true,
                         hideLabel: true,
                         listeners: {
@@ -64,8 +86,11 @@ var Tab5 = (function() {
                     },
                     '->',
                     {
-                        text: 'Refresh',
+                        text: ' Refresh',
                         iconCls: 'x-fa fa-refresh',
+                        tooltip: 'Reload grid data from server',
+                        cls: 'btn-primary',
+                        scale: 'medium',
                         handler: function() {
                             PrefixStoreModule.getStore().load();
                         }
@@ -84,4 +109,3 @@ var Tab5 = (function() {
         create: createTab
     };
 })();
-

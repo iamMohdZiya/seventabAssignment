@@ -33,11 +33,20 @@ var Tab3 = (function() {
 
     function createTab() {
         return {
-            title: 'Tab 3: List',
+            title: 'Tab 3: Staff Directory',
             layout: 'fit',
             items: [{
                 xtype: 'grid',
                 id: 'patientListGrid',
+                cls: 'staff-grid-enhanced grid-enhanced',
+                columnLines: true,
+                viewConfig: {
+                    stripeRows: true,
+                    trackOver: true,
+                    getRowClass: function(record) {
+                        return 'grid-row-highlight';
+                    }
+                },
                 store: Ext.create('Ext.data.Store', {
                     storeId: 'patientListStore',
                     fields: ['name', 'staffCode', 'userType', 'phone', 'dept', 'status', 'joiningDate'],
@@ -49,80 +58,142 @@ var Tab3 = (function() {
                     },
                     data: getSampleData()
                 }),
-                tbar: [
-                    'Search Name:',
-                    {
-                        xtype: 'textfield',
-                        id: 'searchName',
-                        width: 150,
-                        emptyText: 'Enter name...',
-                        enableKeyEvents: true,
-                        listeners: {
-                            keyup: function() { SearchHelper.performSearch(); }
-                        }
-                    },
-                    '-',
-                    'Search Code:',
-                    {
-                        xtype: 'textfield',
-                        id: 'searchCode',
-                        width: 120,
-                        emptyText: 'Enter code...',
-                        enableKeyEvents: true,
-                        listeners: {
-                            keyup: function() { SearchHelper.performSearch(); }
-                        }
-                    },
-                    '-',
-                    'User Type:',
-                    {
-                        xtype: 'combobox',
-                        id: 'searchType',
-                        store: Ext.create('Ext.data.Store', {
-                            fields: ['type'],
-                            data: [
-                                {'type': 'Staff'},
-                                {'type': 'Doctor'},
-                                {'type': 'Consultant'}
+                tbar: [{
+                    xtype: 'container',
+                    layout: 'vbox',
+                    padding: '10 10',
+                    style: 'background: #f8fafb; border-bottom: 2px solid #3498db; border-radius: 4px;',
+                    items: [
+                        {
+                            xtype: 'label',
+                            text: '🔍 Advanced Search & Filters',
+                            style: 'font-weight: bold; font-size: 13px; color: #2c3e50; margin-bottom: 10px;'
+                        },
+                        {
+                            xtype: 'container',
+                            layout: 'hbox',
+                            spacing: 15,
+                            items: [
+                                {
+                                    xtype: 'container',
+                                    layout: 'vbox',
+                                    items: [
+                                        {
+                                            xtype: 'label',
+                                            text: 'Name',
+                                            style: 'font-size: 11px; color: #555; margin-bottom: 3px; font-weight: bold;'
+                                        },
+                                        {
+                                            xtype: 'textfield',
+                                            id: 'searchName',
+                                            width: 180,
+                                            emptyText: 'Search by name...',
+                                            enableKeyEvents: true,
+                                            style: 'border-radius: 4px;',
+                                            listeners: {
+                                                keyup: function() { SearchHelper.performSearch(); }
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    xtype: 'container',
+                                    layout: 'vbox',
+                                    items: [
+                                        {
+                                            xtype: 'label',
+                                            text: 'Code',
+                                            style: 'font-size: 11px; color: #555; margin-bottom: 3px; font-weight: bold;'
+                                        },
+                                        {
+                                            xtype: 'textfield',
+                                            id: 'searchCode',
+                                            width: 140,
+                                            emptyText: 'Search by code...',
+                                            enableKeyEvents: true,
+                                            style: 'border-radius: 4px;',
+                                            listeners: {
+                                                keyup: function() { SearchHelper.performSearch(); }
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    xtype: 'container',
+                                    layout: 'vbox',
+                                    items: [
+                                        {
+                                            xtype: 'label',
+                                            text: 'Type',
+                                            style: 'font-size: 11px; color: #555; margin-bottom: 3px; font-weight: bold;'
+                                        },
+                                        {
+                                            xtype: 'combobox',
+                                            id: 'searchType',
+                                            store: Ext.create('Ext.data.Store', {
+                                                fields: ['type'],
+                                                data: [
+                                                    {'type': 'Staff'},
+                                                    {'type': 'Doctor'},
+                                                    {'type': 'Consultant'}
+                                                ]
+                                            }),
+                                            displayField: 'type',
+                                            valueField: 'type',
+                                            width: 140,
+                                            emptyText: 'All Types',
+                                            queryMode: 'local',
+                                            editable: false,
+                                            style: 'border-radius: 4px;',
+                                            listeners: {
+                                                change: function() { SearchHelper.performSearch(); }
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: '🔄 Clear Filters',
+                                    iconCls: 'x-fa fa-eraser',
+                                    style: 'background: #95a5a6; color: white; border: none; border-radius: 4px; font-weight: bold; margin-top: 18px;',
+                                    handler: function() {
+                                        Ext.getCmp('searchName').reset();
+                                        Ext.getCmp('searchCode').reset();
+                                        Ext.getCmp('searchType').reset();
+                                        SearchHelper.performSearch();
+                                    }
+                                }
                             ]
-                        }),
-                        displayField: 'type',
-                        valueField: 'type',
-                        width: 120,
-                        emptyText: 'All Types',
-                        queryMode: 'local',
-                        editable: true,
-                        listeners: {
-                            change: function() { SearchHelper.performSearch(); }
                         }
-                    },
-                    '->',
-                    {
-                        text: 'Clear Filters',
-                        iconCls: 'x-fa fa-eraser',
-                        handler: function() {
-                            Ext.getCmp('searchName').reset();
-                            Ext.getCmp('searchCode').reset();
-                            Ext.getCmp('searchType').reset();
-                            SearchHelper.performSearch();
-                        }
-                    }
-                ],
+                    ]
+                }],
                 columns: [
-                    { text: 'Name', dataIndex: 'name', flex: 2, minWidth: 200 },
-                    { text: 'Code', dataIndex: 'staffCode', flex: 1, minWidth: 100 },
-                    { text: 'User Type', dataIndex: 'userType', flex: 1, minWidth: 80 },
-                    { text: 'Phone', dataIndex: 'phone', flex: 1, minWidth: 100 },
-                    { text: 'Department', dataIndex: 'dept', flex: 1.5, minWidth: 150 },
-                    { text: 'Status', dataIndex: 'status', flex: 1, minWidth: 80 },
-                    { text: 'Joining Date', dataIndex: 'joiningDate', flex: 1, minWidth: 100 }
+                    { text: 'Name', dataIndex: 'name', flex: 2, minWidth: 200, style: 'font-weight: 600; background-color: #f5f5f5;' },
+                    { text: 'Code', dataIndex: 'staffCode', flex: 1, minWidth: 100, style: 'font-weight: 600; background-color: #f5f5f5;' },
+                    { text: 'User Type', dataIndex: 'userType', flex: 1, minWidth: 90, style: 'font-weight: 600; background-color: #f5f5f5;', renderer: function(value) {
+                        var colors = {'Staff': '#3498db', 'Doctor': '#e74c3c', 'Consultant': '#f39c12'};
+                        return '<span style="background-color: ' + colors[value] + '; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;">' + value + '</span>';
+                    }},
+                    { text: 'Phone', dataIndex: 'phone', flex: 1, minWidth: 110, style: 'font-weight: 600; background-color: #f5f5f5;' },
+                    { text: 'Department', dataIndex: 'dept', flex: 1.5, minWidth: 160, style: 'font-weight: 600; background-color: #f5f5f5;' },
+                    { text: 'Status', dataIndex: 'status', flex: 1, minWidth: 90, style: 'font-weight: 600; background-color: #f5f5f5;', renderer: function(value) {
+                        var statusColors = {'Confirmed': '#27ae60', 'Trainee': '#3498db', 'Contract': '#e67e22', 'Probationary': '#95a5a6', 'Regular': '#16a085'};
+                        return '<span style="background-color: ' + statusColors[value] + '; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;">' + value + '</span>';
+                    }},
+                    { text: 'Joining Date', dataIndex: 'joiningDate', flex: 1, minWidth: 110, style: 'font-weight: 600; background-color: #f5f5f5;' }
                 ],
+                viewConfig: {
+                    stripeRows: true,
+                    getRowClass: function(record) {
+                        return 'grid-row-highlight';
+                    }
+                },
                 bbar: {
                     xtype: 'pagingtoolbar',
                     store: 'patientListStore',
                     displayInfo: true,
-                    displayMsg: 'Displaying records {0} - {1} of {2}',
-                    emptyMsg: "No records to display"
+                    displayMsg: 'Records {0} - {1} of {2}',
+                    emptyMsg: "No records found"
                 }
             }]
         };

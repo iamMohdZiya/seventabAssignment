@@ -5,7 +5,12 @@ Ext.onReady(function() {
         renderTo: document.body,
         width: '100%',
         height: '100%',
-        defaults: { bodyPadding: 20 },
+        cls: 'main-app-panel',
+        tabBar: {
+            cls: 'main-tab-bar',
+            style: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-bottom: 3px solid #667eea;'
+        },
+        defaults: { bodyPadding: 15, style: 'background-color: #f5f5f5;' },
         items: [
             Tab1.create(),
             Tab2.create(),

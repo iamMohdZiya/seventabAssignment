@@ -28,17 +28,23 @@ var Tab6 = (function() {
         var panelRef;
 
         return {
-            title: 'Tab 6: Entry (Web Service)',
+            title: 'Tab 6: REST API Manager',
             layout: 'border',
             items: [
                 {
                     xtype: 'form',
                     region: 'north',
-                    height: 180,
-                    bodyPadding: 15,
-                    defaults: { anchor: '100%', labelWidth: 120, xtype: 'textfield' },
+                    height: 220,
+                    bodyPadding: 20,
+                    bodyStyle: 'background-color: #ffffff; border-bottom: 2px solid #3498db;',
+                    defaults: { anchor: '100%', labelWidth: 100, xtype: 'textfield', labelStyle: 'font-weight: bold; color: #2c3e50;' },
                     items: [
-                        { fieldLabel: 'Prefix Name', name: 'prefixName', allowBlank: false },
+                        {
+                            xtype: 'label',
+                            text: 'Create New Prefix via REST API',
+                            style: 'font-size: 14px; font-weight: bold; color: #2c3e50; display: block; margin-bottom: 15px;'
+                        },
+                        { fieldLabel: 'Prefix Name', name: 'prefixName', allowBlank: false, emptyText: 'Enter prefix name...', style: 'border-radius: 4px;' },
                         {
                             xtype: 'combobox',
                             fieldLabel: 'Gender',
@@ -48,7 +54,9 @@ var Tab6 = (function() {
                             displayField: 'name',
                             valueField: 'code',
                             editable: false,
-                            allowBlank: false
+                            allowBlank: false,
+                            emptyText: 'Select gender...',
+                            style: 'border-radius: 4px;'
                         },
                         {
                             xtype: 'combobox',
@@ -58,19 +66,22 @@ var Tab6 = (function() {
                             queryMode: 'local',
                             displayField: 'name',
                             valueField: 'code',
-                            editable: false
+                            editable: false,
+                            emptyText: 'Select prefix type...',
+                            style: 'border-radius: 4px;'
                         }
                     ],
                     buttons: [
                         {
-                            text: 'Save (REST API)',
+                            text: '💾 Save via REST API',
                             iconCls: 'x-fa fa-save',
+                            style: 'background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 6px rgba(39, 174, 96, 0.25);',
                             handler: function() {
                                 var form = this.up('form');
                                 if (form.isValid()) {
                                     var values = form.getValues();
 
-                                    Ext.Msg.wait('Saving via Web Service...', 'Please wait');
+                                    Ext.Msg.wait('Saving via Web Service...', 'Processing');
                                     fetch('/seventab/api/prefix/create', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
@@ -79,20 +90,21 @@ var Tab6 = (function() {
                                     .then(response => response.text())
                                     .then(data => {
                                         Ext.Msg.close();
-                                        Ext.Msg.alert('Success', 'Prefix saved via Web Service successfully!');
+                                        Ext.Msg.alert('✓ Success', 'Prefix saved via Web Service successfully!');
                                         PrefixStoreModule.getStore().load();
                                         form.reset();
                                     })
                                     .catch(error => {
                                         Ext.Msg.close();
-                                        Ext.Msg.alert('Error', 'Failed to save prefix: ' + error);
+                                        Ext.Msg.alert('✗ Error', 'Failed to save prefix: ' + error);
                                     });
                                 }
                             }
                         },
                         {
-                            text: 'Clear',
+                            text: '🔄 Clear',
                             iconCls: 'x-fa fa-eraser',
+                            style: 'background: #95a5a6; color: white; border: none; border-radius: 4px; font-weight: bold;',
                             handler: function() {
                                 this.up('form').reset();
                             }
@@ -105,33 +117,37 @@ var Tab6 = (function() {
                     layout: 'fit',
                     items: [{
                         xtype: 'panel',
-                        title: 'JSON Response Data',
-                        bodyPadding: 15,
+                        title: '📋 JSON Response Data',
+                        bodyPadding: 20,
                         scrollable: 'y',
-                        html: '<pre id="jsonDisplay" style="background: #ffffff; padding: 20px; border-radius: 4px; border: 2px solid #0066cc; font-family: \'Courier New\', monospace; font-size: 14px; white-space: pre-wrap; word-wrap: break-word; color: #000000; line-height: 1.6;">{...loading...}</pre>',
+                        bodyStyle: 'background: #ffffff;',
+                        html: '<pre id="jsonDisplay" style="background: #1e1e1e; padding: 20px; border-radius: 6px; border: 1px solid #3498db; font-family: \'Courier New\', monospace; font-size: 13px; white-space: pre-wrap; word-wrap: break-word; color: #76d776; line-height: 1.6; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">{...loading...}</pre>',
                         tbar: [{
-                            text: 'Refresh (from API)',
+                            text: '🔄 Refresh (from API)',
                             iconCls: 'x-fa fa-refresh',
+                            style: 'background: #3498db; color: white; border: none; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 6px rgba(52, 152, 219, 0.25);',
                             handler: function() {
                                 PrefixStoreModule.getStore().load();
                             }
                         }, '-', {
-                            text: 'Copy to Clipboard',
+                            text: '📋 Copy to Clipboard',
                             iconCls: 'x-fa fa-copy',
+                            style: 'background: #9b59b6; color: white; border: none; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 6px rgba(155, 89, 182, 0.25);',
                             handler: function() {
                                 var jsonElement = document.getElementById('jsonDisplay');
                                 if (jsonElement) {
                                     var text = jsonElement.innerText;
                                     navigator.clipboard.writeText(text).then(function() {
-                                        Ext.Msg.alert('Success', 'JSON data copied to clipboard!');
+                                        Ext.Msg.alert('✓ Success', 'JSON data copied to clipboard!');
                                     }).catch(function(err) {
-                                        Ext.Msg.alert('Error', 'Failed to copy to clipboard');
+                                        Ext.Msg.alert('✗ Error', 'Failed to copy to clipboard');
                                     });
                                 }
                             }
                         }, '-', {
-                            text: 'Download JSON',
+                            text: '⬇️ Download JSON',
                             iconCls: 'x-fa fa-download',
+                            style: 'background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 6px rgba(39, 174, 96, 0.25);',
                             handler: function() {
                                 var jsonElement = document.getElementById('jsonDisplay');
                                 if (jsonElement) {
