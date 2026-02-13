@@ -109,7 +109,14 @@ public class PdfController {
             ObjectMapper mapper = new ObjectMapper();
             String prefixDataJson = mapper.writeValueAsString(prefixList);
 
-            ProcessBuilder pb = new ProcessBuilder("node", scriptFile.getAbsolutePath(), prefixDataJson);
+            // Write prefix data to a temporary JSON file
+            File tempDataFile = new File(workingDir, "prefix-data-temp.json");
+            Files.write(tempDataFile.toPath(), prefixDataJson.getBytes(),
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.WRITE,
+                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+
+            ProcessBuilder pb = new ProcessBuilder("node", scriptFile.getAbsolutePath(), tempDataFile.getAbsolutePath());
             pb.directory(workingDir);
             pb.redirectErrorStream(true);
             Process process = pb.start();
@@ -128,6 +135,13 @@ public class PdfController {
 
             // Add a small delay to ensure file is fully written
             Thread.sleep(500);
+
+            // Clean up temp file
+            try {
+                tempDataFile.delete();
+            } catch (Exception e) {
+                System.out.println("Warning: Could not delete temp file: " + e.getMessage());
+            }
 
             if (pdfFile != null && pdfFile.exists()) {
                 String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now());
@@ -163,8 +177,8 @@ public class PdfController {
 
     @GetMapping("/download")
     public void downloadExistingPdf(HttpServletResponse response) throws IOException {
-        // Download the pre-generated PDF
-        String pdfPath = "puppeteer-pdf/sample.pdf";
+        // Download the latest generated PDF
+        String pdfPath = "puppeteer-pdf/prefix-master.pdf";
 
         // Get the real path of the web application
         String appPath = servletContext.getRealPath("/");
@@ -217,10 +231,9 @@ public class PdfController {
             }
         }
 
-
         if (pdfFile != null && pdfFile.exists()) {
             response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "attachment; filename=sample.pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=prefix-master.pdf");
 
             try (FileInputStream fis = new FileInputStream(pdfFile);
                  OutputStream os = response.getOutputStream()) {
@@ -233,7 +246,7 @@ public class PdfController {
         } else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write("PDF file not found at: " + (pdfFile != null ? pdfFile.getAbsolutePath() : "unknown path") +
-                                      ". Please generate it first.");
+                                      ". Please generate it first by clicking 'Generate New PDF'.");
         }
     }
 }
