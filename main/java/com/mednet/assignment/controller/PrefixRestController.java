@@ -21,9 +21,7 @@ public class PrefixRestController {
     @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> listAll() {
         try {
-            System.out.println("PrefixRestController: listAll() called");
             List<Prefix> prefixes = prefixDAO.getAllPrefixes();
-            System.out.println("PrefixRestController: Retrieved " + prefixes.size() + " prefixes");
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", prefixes);
@@ -45,7 +43,6 @@ public class PrefixRestController {
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> create(@RequestBody Prefix prefix) {
         try {
-            System.out.println("PrefixRestController: create() called with: " + prefix.getPrefixName());
             prefixDAO.savePrefix(prefix);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -65,7 +62,6 @@ public class PrefixRestController {
     @DeleteMapping(value = "/delete/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> delete(@PathVariable Long id) {
         try {
-            System.out.println("PrefixRestController: delete() called for id: " + id);
             prefixDAO.deletePrefix(id);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

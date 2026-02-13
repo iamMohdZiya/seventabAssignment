@@ -1,16 +1,25 @@
 // ===== MAIN APPLICATION ENTRY POINT =====
 Ext.onReady(function() {
+    document.body.classList.add('layout-compact');
+
     // Create the main tab panel with all tabs
     Ext.create('Ext.tab.Panel', {
         renderTo: document.body,
         width: '100%',
         height: '100%',
         cls: 'main-app-panel',
+
+        // UI: Clean navigation bar
         tabBar: {
-            cls: 'main-tab-bar',
-            style: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-bottom: 3px solid #667eea;'
+            cls: 'main-tab-bar'
         },
-        defaults: { bodyPadding: 15, style: 'background-color: #f5f5f5;' },
+
+        // UI: Consistent background and padding
+        defaults: {
+            bodyPadding: 20,
+            bodyCls: 'app-panel-body'
+        },
+
         items: [
             Tab1.create(),
             Tab2.create(),
@@ -22,4 +31,3 @@ Ext.onReady(function() {
         ]
     });
 });
-

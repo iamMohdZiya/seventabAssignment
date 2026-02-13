@@ -17,30 +17,22 @@ public class PrefixDAOImpl implements PrefixDAO {
 
     @Override
     public void savePrefix(Prefix prefix) {
-        System.out.println("PrefixDAOImpl: Saving prefix - " + prefix.getPrefixName());
         sessionFactory.getCurrentSession().saveOrUpdate(prefix);
-        System.out.println("PrefixDAOImpl: Prefix saved successfully");
     }
 
     @Override
     public List<Prefix> getAllPrefixes() {
-        System.out.println("PrefixDAOImpl: Fetching all prefixes");
         List<Prefix> prefixes = sessionFactory.getCurrentSession()
                 .createQuery("from Prefix", Prefix.class).list();
-        System.out.println("PrefixDAOImpl: Found " + prefixes.size() + " prefixes");
         return prefixes;
     }
 
     @Override
     public void deletePrefix(Long id) {
-        System.out.println("PrefixDAOImpl: Deleting prefix with id - " + id);
         Session session = sessionFactory.getCurrentSession();
         Prefix prefix = session.get(Prefix.class, id);
         if (null != prefix) {
             session.delete(prefix);
-            System.out.println("PrefixDAOImpl: Prefix deleted successfully");
-        } else {
-            System.out.println("PrefixDAOImpl: Prefix not found with id - " + id);
         }
     }
 }

@@ -8,33 +8,21 @@ var SearchHelper = (function() {
         var grid = Ext.getCmp('patientListGrid');
         var store = grid.getStore();
 
+        // Clear existing filters
         store.clearFilter();
 
-        if (!nameVal && !codeVal && !typeVal) {
-            return;
-        }
+        // Get the proxy and update its extra params
+        var proxy = store.getProxy();
 
-        store.filterBy(function(record) {
-            var matchName = true;
-            var matchCode = true;
-            var matchType = true;
-
-            if (nameVal) {
-                matchName = record.get('name').toLowerCase().indexOf(nameVal.toLowerCase()) !== -1;
-            }
-            if (codeVal) {
-                matchCode = record.get('staffCode').toLowerCase().indexOf(codeVal.toLowerCase()) !== -1;
-            }
-            if (typeVal) {
-                matchType = record.get('userType') === typeVal;
-            }
-
-            return matchName && matchCode && matchType;
+        // Set filter parameters to be sent to backend
+        proxy.setExtraParams({
+            name: nameVal || '',
+            staffCode: codeVal || '',
+            userType: typeVal || ''
         });
 
-        if (store.currentPage > 1) {
-            store.loadPage(1);
-        }
+        // Reload from first page
+        store.loadPage(1);
     }
 
     return {

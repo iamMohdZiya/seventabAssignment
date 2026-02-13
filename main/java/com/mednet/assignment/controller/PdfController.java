@@ -4,7 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletContext;
+import com.mednet.assignment.service.PrefixService;
+import com.mednet.assignment.model.Prefix;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * Controller for Tab 7 - PDF Generation using Puppeteer
@@ -16,19 +24,17 @@ public class PdfController {
     @Autowired
     private ServletContext servletContext;
 
+    @Autowired
+    private PrefixService prefixService;
+
     @GetMapping("/generate")
     public void generatePdf(HttpServletResponse response) throws IOException, InterruptedException {
-        System.out.println("PDF Controller: generatePdf() called");
-        System.out.println("Current working directory: " + System.getProperty("user.dir"));
-        System.out.flush();
-
         // Get the real path of the web application
         String appPath = servletContext.getRealPath("/");
-        System.out.println("Web application path: " + appPath);
 
         // Path to the puppeteer script - resolve from project root, not web app root
         String scriptPath = "puppeteer-pdf/generate-pdf.js";
-        String pdfPath = "puppeteer-pdf/hello-world.pdf";
+        String pdfPath = "puppeteer-pdf/prefix-master.pdf";
 
         File projectRoot = null;
         File scriptFile = null;
@@ -47,7 +53,6 @@ public class PdfController {
                         projectRoot = current;
                         scriptFile = testScript;
                         pdfFile = new File(current, pdfPath);
-                        System.out.println("Found via appPath navigation at level " + i);
                         break;
                     }
                 }
@@ -61,7 +66,6 @@ public class PdfController {
             if (testScript.exists()) {
                 scriptFile = testScript;
                 pdfFile = new File(projectRoot, pdfPath);
-                System.out.println("Found via user.dir");
             }
         }
 
@@ -77,7 +81,6 @@ public class PdfController {
                             projectRoot = current;
                             scriptFile = testScript;
                             pdfFile = new File(current, pdfPath);
-                            System.out.println("Found via pom.xml at level " + i);
                             break;
                         }
                     }
@@ -85,19 +88,10 @@ public class PdfController {
             }
         }
 
-        System.out.println("Project root: " + (projectRoot != null ? projectRoot.getAbsolutePath() : "null"));
-        System.out.println("Script path: " + (scriptFile != null ? scriptFile.getAbsolutePath() : "null"));
-        System.out.println("Script exists: " + (scriptFile != null && scriptFile.exists()));
-        if (scriptFile != null && scriptFile.getParentFile() != null) {
-            System.out.println("Script parent dir: " + scriptFile.getParentFile().getAbsolutePath());
-            System.out.println("Script parent dir exists: " + scriptFile.getParentFile().exists());
-        }
-        System.out.flush();
-
         // Validate paths before executing
-        if (!scriptFile.exists()) {
+        if (scriptFile == null || !scriptFile.exists()) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("Error: Script file not found at: " + scriptFile.getAbsolutePath() +
+            response.getWriter().write("Error: Script file not found at: " + (scriptFile != null ? scriptFile.getAbsolutePath() : "unknown path") +
                                       ". Please ensure puppeteer-pdf/generate-pdf.js exists in the project directory.");
             return;
         }
@@ -111,34 +105,45 @@ public class PdfController {
 
         // Execute Node.js script to generate PDF
         try {
-            ProcessBuilder pb = new ProcessBuilder("node", scriptFile.getAbsolutePath());
+            List<Prefix> prefixList = prefixService.getAllPrefixes();
+            ObjectMapper mapper = new ObjectMapper();
+            String prefixDataJson = mapper.writeValueAsString(prefixList);
+
+            ProcessBuilder pb = new ProcessBuilder("node", scriptFile.getAbsolutePath(), prefixDataJson);
             pb.directory(workingDir);
+            pb.redirectErrorStream(true);
             Process process = pb.start();
+
+            // Capture output from Node.js script
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            StringBuilder output = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+                System.out.println("[Node.js] " + line);
+            }
 
             // Wait for process to complete
             int exitCode = process.waitFor();
-            System.out.println("Process exit code: " + exitCode);
-            System.out.println("PDF file exists: " + pdfFile.exists());
-            System.out.flush();
 
-            if (exitCode == 0 && pdfFile.exists()) {
-                // Send the generated PDF to the browser
-                response.setContentType("application/pdf");
-                response.setHeader("Content-Disposition", "attachment; filename=hello-world.pdf");
+            // Add a small delay to ensure file is fully written
+            Thread.sleep(500);
 
-                try (FileInputStream fis = new FileInputStream(pdfFile);
-                     OutputStream os = response.getOutputStream()) {
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-                    while ((bytesRead = fis.read(buffer)) != -1) {
-                        os.write(buffer, 0, bytesRead);
-                    }
-                }
+            if (pdfFile != null && pdfFile.exists()) {
+                String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now());
+                String timestampedName = "prefix-master-" + timestamp + ".pdf";
+                File timestampedFile = new File(pdfFile.getParentFile(), timestampedName);
+
+                Files.copy(pdfFile.toPath(), timestampedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                response.setContentType("application/json");
+                response.getWriter().write(
+                    "{\"message\":\"PDF generated successfully with prefix master data\",\"fileName\":\"" + timestampedName + "\"}"
+                );
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.getWriter().write("Error generating PDF. Exit code: " + exitCode +
-                                          ". Script found: " + scriptFile.exists() +
-                                          ". PDF exists: " + pdfFile.exists());
+                                          ". PDF file was not created. Output: " + output.toString());
             }
         } catch (IOException e) {
             // Handle case where Node.js is not installed or not in PATH
@@ -150,21 +155,19 @@ public class PdfController {
             } else {
                 throw e;  // Re-throw other IO exceptions
             }
+        } catch (InterruptedException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error: PDF generation process was interrupted: " + e.getMessage());
         }
     }
 
     @GetMapping("/download")
     public void downloadExistingPdf(HttpServletResponse response) throws IOException {
-        System.out.println("PDF Controller: downloadExistingPdf() called");
-        System.out.println("Current working directory: " + System.getProperty("user.dir"));
-        System.out.flush();
-
         // Download the pre-generated PDF
-        String pdfPath = "puppeteer-pdf/hello-world.pdf";
+        String pdfPath = "puppeteer-pdf/sample.pdf";
 
         // Get the real path of the web application
         String appPath = servletContext.getRealPath("/");
-        System.out.println("Web application path: " + appPath);
 
         File projectRoot = null;
         File pdfFile = null;
@@ -181,7 +184,6 @@ public class PdfController {
                     if (testPdf.exists()) {
                         projectRoot = current;
                         pdfFile = testPdf;
-                        System.out.println("Found PDF via appPath navigation at level " + i);
                         break;
                     }
                 }
@@ -194,7 +196,6 @@ public class PdfController {
             File testPdf = new File(projectRoot, pdfPath);
             if (testPdf.exists()) {
                 pdfFile = testPdf;
-                System.out.println("Found PDF via user.dir");
             }
         }
 
@@ -209,7 +210,6 @@ public class PdfController {
                         if (testPdf.exists()) {
                             projectRoot = current;
                             pdfFile = testPdf;
-                            System.out.println("Found PDF via pom.xml at level " + i);
                             break;
                         }
                     }
@@ -217,14 +217,10 @@ public class PdfController {
             }
         }
 
-        System.out.println("Project root: " + (projectRoot != null ? projectRoot.getAbsolutePath() : "null"));
-        System.out.println("Looking for PDF at: " + (pdfFile != null ? pdfFile.getAbsolutePath() : "null"));
-        System.out.println("PDF exists: " + (pdfFile != null && pdfFile.exists()));
-        System.out.flush();
 
-        if (pdfFile.exists()) {
+        if (pdfFile != null && pdfFile.exists()) {
             response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "attachment; filename=hello-world.pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=sample.pdf");
 
             try (FileInputStream fis = new FileInputStream(pdfFile);
                  OutputStream os = response.getOutputStream()) {
@@ -236,7 +232,7 @@ public class PdfController {
             }
         } else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("PDF file not found at: " + pdfFile.getAbsolutePath() +
+            response.getWriter().write("PDF file not found at: " + (pdfFile != null ? pdfFile.getAbsolutePath() : "unknown path") +
                                       ". Please generate it first.");
         }
     }

@@ -1,27 +1,33 @@
 package com.mednet.assignment.controller;
 
-import com.mednet.assignment.dao.PrefixDAO;
 import com.mednet.assignment.model.Prefix;
+import com.mednet.assignment.service.PrefixService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/excel")
 public class ExcelController {
 
     @Autowired
-    private PrefixDAO prefixDAO;
+    private PrefixService prefixService;
 
     // Download current records as Excel (Source 110)
     @GetMapping("/download")
     public void downloadExcel(HttpServletResponse response) throws IOException {
-        List<Prefix> list = prefixDAO.getAllPrefixes();
+        List<Prefix> list = prefixService.getAllPrefixes();
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Prefix Data");
 
@@ -53,33 +59,76 @@ public class ExcelController {
     // Upload and refresh data (Source 111, 112)
     @PostMapping("/upload")
     @ResponseBody
-    public String uploadExcel(@RequestParam("file") MultipartFile file) throws IOException {
-        Workbook workbook = new XSSFWorkbook(file.getInputStream());
-        Sheet sheet = workbook.getSheetAt(0);
-        DataFormatter formatter = new DataFormatter();
+    public ResponseEntity<Map<String, Object>> uploadExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = new HashMap<>();
+        if (file == null || file.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "No file uploaded or file is empty.");
+            return ResponseEntity.badRequest().body(result);
+        }
 
-        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-            Row row = sheet.getRow(i);
-            if (row == null) continue;
+        int savedCount = 0;
+        int skippedCount = 0;
+        List<String> rowErrors = new ArrayList<>();
 
-            String prefixName = formatter.formatCellValue(row.getCell(0)).trim();
-            String gender = formatter.formatCellValue(row.getCell(1)).trim();
-            String prefixOf = formatter.formatCellValue(row.getCell(2)).trim();
-
-            if (prefixName.isEmpty() && gender.isEmpty() && prefixOf.isEmpty()) {
-                continue;
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            if (sheet == null) {
+                result.put("success", false);
+                result.put("message", "Uploaded file has no sheets.");
+                return ResponseEntity.badRequest().body(result);
             }
 
-            if (!prefixName.isEmpty()) {
+            DataFormatter formatter = new DataFormatter();
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) {
+                    skippedCount++;
+                    continue;
+                }
+
+                String prefixName = formatter.formatCellValue(row.getCell(0)).trim();
+                String gender = formatter.formatCellValue(row.getCell(1)).trim();
+                String prefixOf = formatter.formatCellValue(row.getCell(2)).trim();
+
+                if (prefixName.isEmpty() && gender.isEmpty() && prefixOf.isEmpty()) {
+                    skippedCount++;
+                    continue;
+                }
+
+                if (prefixName.isEmpty()) {
+                    rowErrors.add("Row " + (i + 1) + ": Prefix Name is required.");
+                    continue;
+                }
+
                 Prefix p = new Prefix();
                 p.setPrefixName(prefixName);
                 p.setGender(gender.isEmpty() ? null : gender);
                 p.setPrefixOf(prefixOf.isEmpty() ? null : prefixOf);
-                prefixDAO.savePrefix(p);
+
+                try {
+                    prefixService.savePrefix(p);
+                    savedCount++;
+                } catch (Exception e) {
+                    rowErrors.add("Row " + (i + 1) + ": " + e.getMessage());
+                }
             }
+        } catch (IOException e) {
+            result.put("success", false);
+            result.put("message", "Failed to read Excel file: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
-        workbook.close();
-        return "Success";
+
+        if (!rowErrors.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "Upload completed with errors. Saved: " + savedCount + ", Skipped: " + skippedCount);
+            result.put("errors", rowErrors);
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        result.put("success", true);
+        result.put("message", "Upload successful. Saved: " + savedCount + ", Skipped: " + skippedCount);
+        return ResponseEntity.ok(result);
     }
 
     // Download empty Excel template (Source 111)

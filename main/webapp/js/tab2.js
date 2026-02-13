@@ -2,45 +2,75 @@
 var Tab2 = (function() {
     function showPatientPopup() {
         Ext.create('Ext.window.Window', {
-            title: '👤 Patient Details & Notes',
-            width: 850,
-            height: 650,
+            title: 'Patient Details & Notes',
+            width: 900,
+            height: 700,
             layout: 'border',
             modal: true,
             resizable: true,
-            style: 'box-shadow: 0 4px 16px rgba(0,0,0,0.15);',
-            cls: 'custom-window',
+            draggable: true,
+            cls: 'modal-window',
+            style: 'border-radius: 10px; overflow: hidden;',
+            bodyStyle: 'background: #f6f7fb;',
+
             items: [
+                // --- TOP REGION: PATIENT DETAILS ---
                 {
                     region: 'north',
-                    height: 240,
-                    bodyPadding: 20,
+                    height: 280,
+                    bodyPadding: '20 30',
                     scrollable: true,
-                    style: 'background: #ffffff; border-bottom: 2px solid #3498db;',
-                    html: '<table style="width:100%; border-collapse: separate; border-spacing: 0 12px; font-family: sans-serif; font-size: 13px;">' +
-                          '<tr><td style="width:140px; font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> Name</td><td style="width:15px;">:</td><td style="color: #555;">John Doe</td></tr>' +
-                          '<tr><td style="font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> MRN</td><td>:</td><td style="color: #555;">MRN-2024-001</td></tr>' +
-                          '<tr><td style="font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> Date Of Birth</td><td>:</td><td style="color: #555;">15-01-1990</td></tr>' +
-                          '<tr><td style="font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> Age</td><td>:</td><td style="color: #555;">34 years</td></tr>' +
-                          '<tr><td style="font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> Gender</td><td>:</td><td style="color: #555;">Male</td></tr>' +
-                          '<tr><td style="font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> Address</td><td>:</td><td style="color: #555;">123 Medical Lane, Healthcare City</td></tr>' +
-                          '<tr><td style="font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> Reg Date</td><td>:</td><td style="color: #555;">10-02-2024</td></tr>' +
-                          '<tr><td style="font-weight: bold; color: #2c3e50; padding: 8px 0;"><span style="color: #3498db;">●</span> Status</td><td>:</td><td><span style="background-color: #27ae60; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px;">Active</span></td></tr>' +
-                          '</table>'
+                    style: 'border-bottom: 1px solid #e5e7eb; background: #ffffff;',
+                    html: '' +
+                        '<div class="section-title" style="margin-bottom:12px;">Patient Information</div>' +
+                        '<table class="pt-table">' +
+                            '<tr class="pt-row"><td class="pt-label">Patient Name</td><td class="pt-value">John Doe</td></tr>' +
+                            '<tr class="pt-row"><td class="pt-label">MRN</td><td class="pt-value"><span class="pt-code">MRN-2024-001</span></td></tr>' +
+                            '<tr class="pt-row"><td class="pt-label">Date Of Birth</td><td class="pt-value">15-01-1990 <span class="muted-text">(34 Years)</span></td></tr>' +
+                            '<tr class="pt-row"><td class="pt-label">Gender</td><td class="pt-value">Male</td></tr>' +
+                            '<tr class="pt-row"><td class="pt-label">Address</td><td class="pt-value">123 Medical Lane, Healthcare City, NY 10012</td></tr>' +
+                            '<tr class="pt-row"><td class="pt-label">Registration</td><td class="pt-value">10-Feb-2024</td></tr>' +
+                            '<tr class="pt-row"><td class="pt-label">Status</td><td class="pt-value"><span class="status-badge status-confirmed">Active</span></td></tr>' +
+                        '</table>'
                 },
+
+                // --- CENTER REGION: EDITOR ---
                 {
                     region: 'center',
-                    xtype: 'htmleditor',
-                    title: '📝 Medical Notes',
-                    margin: '5 0 0 0',
-                    value: 'CT SCAN, CYTOLOGY, DIGITAL X-RAY, FLUID EXAMINATION, GASTROENTEROLOGY INVESTIGATION, HAEMATOLOGY, HARMONES, HISTOPATHOLOGY, IMMUNO ASSAYS'
+                    xtype: 'panel',
+                    title: 'Medical Notes & Observations',
+                    layout: 'fit',
+                    margin: '15',
+                    cls: 'grid-enhanced',
+                    bodyStyle: 'border: 1px solid #e5e7eb; border-radius: 6px;',
+                    items: [
+                        {
+                            xtype: 'htmleditor',
+                            value: '' +
+                                '<div style="font-family: sans-serif; color: #1f2937;">' +
+                                    '<p><strong>Investigations Requested:</strong></p>' +
+                                    '<ul>' +
+                                        '<li>CT SCAN</li>' +
+                                        '<li>CYTOLOGY</li>' +
+                                        '<li>DIGITAL X-RAY</li>' +
+                                        '<li>FLUID EXAMINATION</li>' +
+                                        '<li>GASTROENTEROLOGY INVESTIGATION</li>' +
+                                        '<li>HAEMATOLOGY</li>' +
+                                    '</ul>' +
+                                '</div>',
+                            enableColors: false,
+                            enableAlignments: false
+                        }
+                    ]
                 }
             ],
+
+            // --- FOOTER BUTTONS ---
             buttons: [
                 {
-                    text: '✓ Close',
-                    iconCls: 'x-fa fa-close',
-                    style: 'background: #95a5a6; color: white; border: none; border-radius: 4px; font-weight: bold;',
+                    text: 'Close',
+                    cls: 'btn-danger',
+                    width: 100,
                     handler: function() {
                         this.up('window').close();
                     }
@@ -53,36 +83,39 @@ var Tab2 = (function() {
         return {
             title: 'Tab 2: Popup',
             layout: 'vbox',
-            defaults: { padding: 15 },
+            cls: 'form-section',
+            style: 'margin: 15px;',
+            defaults: { width: '100%' },
             items: [
                 {
-                    xtype: 'container',
-                    html: '<h3 style="color: #2c3e50; border-left: 4px solid #3498db; padding-left: 12px; margin: 0; font-size: 16px; font-weight: 600;">Patient Details Popup with Editor</h3>',
-                    height: 40
-                },
-                {
-                    xtype: 'button',
-                    text: '🔓 Open Patient Details',
-                    iconCls: 'x-fa fa-folder-open',
-                    scale: 'medium',
-                    style: 'background: #3498db; color: white; border: none; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 6px rgba(52, 152, 219, 0.25);',
-                    width: 280,
-                    height: 40,
-                    margin: '20 0 0 0',
-                    handler: showPatientPopup
+                    xtype: 'component',
+                    html: '<h3>Patient Details Popup with Editor</h3>'
                 },
                 {
                     xtype: 'container',
-                    html: '<div style="margin-top: 30px; padding: 15px; background: #f8fafb; border-left: 4px solid #3498db; border-radius: 4px; color: #555; font-size: 13px; line-height: 1.8;"><strong style="color: #2c3e50; display: block; margin-bottom: 10px;">✨ Features:</strong>' +
-                          '<ul style="margin: 0; padding-left: 20px;">' +
-                          '<li>Modal popup displaying patient information</li>' +
-                          '<li>Rich HTML editor with formatting toolbar (Bold, Italic, Underline, Lists, etc.)</li>' +
-                          '<li>Professional data presentation with styled table</li>' +
-                          '<li>Status badge for patient status</li>' +
-                          '<li>Resizable popup window</li>' +
-                          '</ul></div>',
-                    flex: 1
-                }
+                    layout: {
+                        type: 'vbox',
+                        align: 'stretch'
+                    },
+                    items: [
+                        {
+                            xtype: 'container',
+                            html: '<p class="muted-text" style="margin-bottom: 16px;">Click the button below to view the patient demographic details modal and access the rich text editor for medical notes.</p>'
+                        },
+                        {
+                            xtype: 'button',
+                            text: 'Open Patient Details',
+                            cls: 'btn-primary',
+                            scale: 'medium',
+                            width: 250,
+                            height: 44,
+                            handler: showPatientPopup
+                        }
+                    ]
+                },
+
+                // --- FOOTER FEATURES LIST ---
+
             ]
         };
     }
@@ -91,4 +124,3 @@ var Tab2 = (function() {
         create: createTab
     };
 })();
-
