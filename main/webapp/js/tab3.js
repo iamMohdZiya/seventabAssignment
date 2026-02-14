@@ -1,12 +1,9 @@
-// ===== TAB 3: LIST WITH PAGING & SEARCH =====
-var Tab3 = (function() {
-    // Debounce timer for search inputs
-    var searchDebounceTimer = null;
-    var DEBOUNCE_DELAY = 500; // milliseconds
 
-    /**
-     * Debounced search function
-     */
+var Tab3 = (function() {
+
+    var searchDebounceTimer = null;
+    var DEBOUNCE_DELAY = 500;
+
     function debouncedSearch() {
         clearTimeout(searchDebounceTimer);
         searchDebounceTimer = setTimeout(function() {
