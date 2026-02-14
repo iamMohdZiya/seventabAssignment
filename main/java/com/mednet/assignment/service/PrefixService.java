@@ -8,9 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * DWR Service for Tab 4 - Entry/List using Hibernate + DWR
- */
 @Service("prefixService")
 @Transactional
 public class PrefixService {
@@ -40,4 +37,3 @@ public class PrefixService {
         return null;
     }
 }
-

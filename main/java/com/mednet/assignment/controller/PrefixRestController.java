@@ -1,7 +1,7 @@
 package com.mednet.assignment.controller;
 
-import com.mednet.assignment.dao.PrefixDAO;
 import com.mednet.assignment.model.Prefix;
+import com.mednet.assignment.service.PrefixService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +15,12 @@ import java.util.Map;
 public class PrefixRestController {
 
     @Autowired
-    private PrefixDAO prefixDAO;
+    private PrefixService prefixService;
 
-    // List all records with pagination support (Source 144)
     @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> listAll() {
         try {
-            List<Prefix> prefixes = prefixDAO.getAllPrefixes();
+            List<Prefix> prefixes = prefixService.getAllPrefixes();
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", prefixes);
@@ -39,11 +38,10 @@ public class PrefixRestController {
         }
     }
 
-    // Create record (Source 142)
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> create(@RequestBody Prefix prefix) {
         try {
-            prefixDAO.savePrefix(prefix);
+            prefixService.savePrefix(prefix);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Prefix saved successfully");
@@ -58,11 +56,10 @@ public class PrefixRestController {
         }
     }
 
-    // Delete record (Source 144)
     @DeleteMapping(value = "/delete/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> delete(@PathVariable Long id) {
         try {
-            prefixDAO.deletePrefix(id);
+            prefixService.deletePrefix(id);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Prefix deleted successfully");
